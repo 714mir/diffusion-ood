@@ -64,15 +64,15 @@ class DiffusionScheduler(nn.Module):
 
         betas = self._build_beta_schedule(num_timesteps, schedule_type)
 
-        assert betas.shape == (num_timesteps,), (
-            f"Expected betas shape ({num_timesteps},), got {tuple(betas.shape)}"
-        )
-        assert betas.dtype == torch.float32, (
-            f"Expected float32 betas, got {betas.dtype}"
-        )
-        assert torch.all(betas > 0) and torch.all(betas < 1), (
-            "All beta_t must satisfy 0 < beta_t < 1 for a valid schedule."
-        )
+        assert betas.shape == (
+            num_timesteps,
+        ), f"Expected betas shape ({num_timesteps},), got {tuple(betas.shape)}"
+        assert (
+            betas.dtype == torch.float32
+        ), f"Expected float32 betas, got {betas.dtype}"
+        assert torch.all(betas > 0) and torch.all(
+            betas < 1
+        ), "All beta_t must satisfy 0 < beta_t < 1 for a valid schedule."
 
         alphas = 1.0 - betas
         alphas_cumprod = torch.cumprod(alphas, dim=0)
@@ -146,18 +146,12 @@ class DiffusionScheduler(nn.Module):
             Coefficient tensor of shape ``(B, 1, ..., 1)`` with
             ``len(x_shape)`` total dimensions.
         """
-        assert a.dim() == 1, (
-            f"Schedule buffer must be 1-D, got shape {tuple(a.shape)}"
-        )
-        assert t.dim() == 1, (
-            f"Timestep indices must be 1-D, got shape {tuple(t.shape)}"
-        )
-        assert t.dtype == torch.long, (
-            f"Timestep indices must be torch.long, got {t.dtype}"
-        )
-        assert a.device == t.device, (
-            f"Buffer on {a.device} but indices on {t.device}"
-        )
+        assert a.dim() == 1, f"Schedule buffer must be 1-D, got shape {tuple(a.shape)}"
+        assert t.dim() == 1, f"Timestep indices must be 1-D, got shape {tuple(t.shape)}"
+        assert (
+            t.dtype == torch.long
+        ), f"Timestep indices must be torch.long, got {t.dtype}"
+        assert a.device == t.device, f"Buffer on {a.device} but indices on {t.device}"
         assert len(x_shape) >= 1, "x_shape must have at least one (batch) dim"
         assert t.shape[0] == x_shape[0], (
             f"Batch mismatch: t has {t.shape[0]} entries but "
@@ -203,16 +197,14 @@ class DiffusionScheduler(nn.Module):
                   returned so it can serve as the regression target for an
                   epsilon-prediction denoiser.
         """
-        assert x_0.is_floating_point(), (
-            f"x_0 must be a floating tensor, got dtype {x_0.dtype}"
-        )
+        assert (
+            x_0.is_floating_point()
+        ), f"x_0 must be a floating tensor, got dtype {x_0.dtype}"
         assert t.dtype == torch.long, f"t must be torch.long, got {t.dtype}"
-        assert t.device == x_0.device, (
-            f"t on {t.device} but x_0 on {x_0.device}"
-        )
-        assert t.shape == (x_0.shape[0],), (
-            f"Expected t.shape ({x_0.shape[0]},), got {tuple(t.shape)}"
-        )
+        assert t.device == x_0.device, f"t on {t.device} but x_0 on {x_0.device}"
+        assert t.shape == (
+            x_0.shape[0],
+        ), f"Expected t.shape ({x_0.shape[0]},), got {tuple(t.shape)}"
         # Range check: catches off-by-one errors when callers sample t. One
         # device->host sync per call, negligible next to a training step.
         t_min = int(t.min())
@@ -226,26 +218,23 @@ class DiffusionScheduler(nn.Module):
             noise = torch.randn_like(x_0)
         else:
             assert noise.shape == x_0.shape, (
-                f"noise.shape {tuple(noise.shape)} != x_0.shape "
-                f"{tuple(x_0.shape)}"
+                f"noise.shape {tuple(noise.shape)} != x_0.shape " f"{tuple(x_0.shape)}"
             )
-            assert noise.device == x_0.device, (
-                f"noise on {noise.device} but x_0 on {x_0.device}"
-            )
-            assert noise.dtype == x_0.dtype, (
-                f"noise dtype {noise.dtype} != x_0 dtype {x_0.dtype}"
-            )
+            assert (
+                noise.device == x_0.device
+            ), f"noise on {noise.device} but x_0 on {x_0.device}"
+            assert (
+                noise.dtype == x_0.dtype
+            ), f"noise dtype {noise.dtype} != x_0 dtype {x_0.dtype}"
 
-        sqrt_alpha_bar = self._extract(
-            self.sqrt_alphas_cumprod, t, x_0.shape
-        )
+        sqrt_alpha_bar = self._extract(self.sqrt_alphas_cumprod, t, x_0.shape)
         sqrt_one_minus_alpha_bar = self._extract(
             self.sqrt_one_minus_alphas_cumprod, t, x_0.shape
         )
 
         x_t = sqrt_alpha_bar * x_0 + sqrt_one_minus_alpha_bar * noise
 
-        assert x_t.shape == x_0.shape, (
-            "internal broadcasting bug: x_t shape does not match x_0"
-        )
+        assert (
+            x_t.shape == x_0.shape
+        ), "internal broadcasting bug: x_t shape does not match x_0"
         return x_t, noise
