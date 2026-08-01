@@ -238,3 +238,27 @@ class DiffusionScheduler(nn.Module):
             x_t.shape == x_0.shape
         ), "internal broadcasting bug: x_t shape does not match x_0"
         return x_t, noise
+
+
+if __name__ == "__main__":
+    # Forward-process smoke test.
+    #
+    # With x_0 = 0, the closed-form jump reduces to
+    #     x_t = sqrt(1 - bar{alpha}_t) * eps,
+    # so each row of x_t is a Gaussian sample whose scale grows monotonically
+    # in t. Row 0 (t=0) should be ~0; row 4 (t=999) should be ~unit-variance.
+    torch.manual_seed(0)
+
+    scheduler = DiffusionScheduler(num_timesteps=1000)
+    x_0 = torch.zeros(5, 2)
+    t = torch.tensor([0, 250, 500, 750, 999], dtype=torch.long)
+
+    x_t, noise = scheduler.add_noise(x_0, t)
+
+    torch.set_printoptions(precision=4, sci_mode=False)
+    print(f"t                            : {t.tolist()}")
+    print(f"bar_alpha_t                  : {scheduler.alphas_cumprod[t].tolist()}")
+    print(f"sqrt(1 - bar_alpha_t)        : {scheduler.sqrt_one_minus_alphas_cumprod[t].tolist()}")
+    print(f"x_0 shape={tuple(x_0.shape)}          : all zeros")
+    print(f"noise (eps ~ N(0, I))        :\n{noise}")
+    print(f"x_t = add_noise(x_0, t)      :\n{x_t}")
