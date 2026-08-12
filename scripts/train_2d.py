@@ -98,7 +98,9 @@ def train(cfg: TrainConfig) -> List[float]:
     """
     set_seed(cfg.seed)
     device = select_device()
-    print(f"[train_2d] device={device}  dataset={cfg.dataset_name}  T={cfg.num_timesteps}")
+    print(
+        f"[train_2d] device={device}  dataset={cfg.dataset_name}  T={cfg.num_timesteps}"
+    )
 
     loader, _scaler = get_2d_dataset(
         dataset_name=cfg.dataset_name,
@@ -116,12 +118,12 @@ def train(cfg: TrainConfig) -> List[float]:
         num_layers=cfg.num_layers,
     ).to(device)
 
-    optimizer = AdamW(
-        model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay
-    )
+    optimizer = AdamW(model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
 
     n_params = sum(p.numel() for p in model.parameters())
-    print(f"[train_2d] model params={n_params:,}  lr={cfg.lr:g}  batch_size={cfg.batch_size}")
+    print(
+        f"[train_2d] model params={n_params:,}  lr={cfg.lr:g}  batch_size={cfg.batch_size}"
+    )
 
     epoch_losses: List[float] = []
     model.train()
@@ -164,9 +166,7 @@ def train(cfg: TrainConfig) -> List[float]:
 
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(
-                model.parameters(), max_norm=cfg.grad_clip
-            )
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=cfg.grad_clip)
             optimizer.step()
 
             loss_value = loss.item()
